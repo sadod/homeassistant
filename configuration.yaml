@@ -1,0 +1,282 @@
+# Home Assistant Configuration
+# Improved version with security, performance, and functionality enhancements
+
+homeassistant:
+  name: My Home
+  latitude: !secret latitude_coord
+  longitude: !secret longitude_coord
+  elevation: !secret elevation
+  unit_system: metric
+  time_zone: Europe/London
+  currency: GBP
+  # Add country for better integrations
+  country: GB
+  # Allowlist external directories for security
+  allowlist_external_dirs:
+    - /config
+    - /share
+    - /media
+
+# Core components (many included in default_config)
+default_config:
+
+# System health monitoring
+system_health:
+
+# Logger configuration for better debugging
+logger:
+  default: info
+  logs:
+    homeassistant.core: warning
+    homeassistant.components.recorder: warning
+    homeassistant.components.http: warning
+
+# Frontend customization
+frontend:
+  themes: !include_dir_merge_named themes
+  # Enable extra module URL for custom cards
+  extra_module_url:
+    - /hacsfiles/lovelace-card-mod/card-mod.js
+
+# Text to speech with multiple options
+tts:
+  - platform: google_translate
+    language: en-gb
+    cache: true
+    cache_dir: /tmp/tts
+    time_memory: 300
+
+# File inclusions
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Device tracking - improved configuration
+device_tracker:
+  - platform: mobile_app
+    consider_home: 300
+    new_device_defaults:
+      track_new_devices: false
+      hide_if_away: false
+
+# Sonos - using discovery with scan interval
+sonos:
+  media_player:
+    scan_interval: 30
+
+# Enhanced database settings
+recorder:
+  db_url: sqlite:///config/home-assistant_v3.db
+  purge_keep_days: 30
+  commit_interval: 1
+  # Exclude frequently changing entities to improve performance
+  exclude:
+    entities:
+      - sun.sun
+      - sensor.date
+      - sensor.time
+    entity_globs:
+      - sensor.*_linkquality
+      - sensor.*_battery
+    domains:
+      - updater
+      - weather
+  # Include only necessary domains
+  include:
+    domains:
+      - automation
+      - binary_sensor
+      - climate
+      - device_tracker
+      - input_boolean
+      - input_number
+      - input_select
+      - light
+      - media_player
+      - person
+      - script
+      - sensor
+      - switch
+      - zone
+
+# Enhanced HTTP settings with security
+http:
+  ip_ban_enabled: true
+  login_attempts_threshold: 5
+  # CORS settings for better security
+  cors_allowed_origins:
+    - https://cast.home-assistant.io
+  # Use X-Forwarded-For headers
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+
+# Backup configuration
+backup:
+
+# History configuration for better performance
+history:
+  exclude:
+    entities:
+      - sun.sun
+      - sensor.date
+      - sensor.time
+    entity_globs:
+      - sensor.*_linkquality
+    domains:
+      - updater
+      - weather
+
+# Energy monitoring (if you have energy sensors)
+energy:
+
+# Person tracking
+person:
+
+# Mobile app configuration
+mobile_app:
+
+# Input helpers for automation control
+input_boolean:
+  lighting_automation:
+    name: Lighting Automation
+    initial: on
+    icon: mdi:lightbulb-auto
+  
+  guest_mode:
+    name: Guest Mode
+    initial: off
+    icon: mdi:account-multiple
+  
+  vacation_mode:
+    name: Vacation Mode
+    initial: off
+    icon: mdi:airplane
+  
+  sleep_mode:
+    name: Sleep Mode
+    initial: off
+    icon: mdi:sleep
+
+input_number:
+  brightness_level:
+    name: Default Brightness Level
+    initial: 80
+    min: 1
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    icon: mdi:brightness-6
+
+input_select:
+  house_mode:
+    name: House Mode
+    options:
+      - Home
+      - Away
+      - Sleep
+      - Guest
+      - Vacation
+    initial: Home
+    icon: mdi:home-variant
+
+# Zones for location-based automation (uncomment and add to secrets.yaml when ready)
+# zone:
+#   - name: Work
+#     latitude: !secret work_latitude
+#     longitude: !secret work_longitude
+#     radius: 100
+#     icon: mdi:briefcase
+#   
+#   - name: School
+#     latitude: !secret school_latitude
+#     longitude: !secret school_longitude
+#     radius: 50
+#     icon: mdi:school
+
+# Sun component for daylight automation
+sun:
+
+# Weather integration (if not using default_config weather)
+# weather:
+#   - platform: met
+#     name: Weather
+
+# Utility meter for energy tracking (uncomment when you have energy sensors)
+# utility_meter:
+#   daily_energy:
+#     source: sensor.total_energy
+#     cycle: daily
+#   monthly_energy:
+#     source: sensor.total_energy
+#     cycle: monthly
+
+# Template sensors for enhanced functionality
+template:
+  - sensor:
+      - name: "House Occupancy"
+        state: >
+          {% set people_home = states.person | selectattr('state', 'eq', 'home') | list | count %}
+          {% if people_home > 0 %}
+            occupied
+          {% else %}
+            empty
+          {% endif %}
+        icon: >
+          {% if is_state('sensor.house_occupancy', 'occupied') %}
+            mdi:home-account
+          {% else %}
+            mdi:home-outline
+          {% endif %}
+
+# Proximity for location-based automation (uncomment and update person entity when ready)
+# proximity:
+#   home:
+#     devices:
+#       - person.your_name
+#     tolerance: 50
+#     unit_of_measurement: km
+
+# MQTT (if you use MQTT devices)
+# mqtt:
+#   broker: !secret mqtt_broker
+#   port: 1883
+#   username: !secret mqtt_username
+#   password: !secret mqtt_password
+#   discovery: true
+#   discovery_prefix: homeassistant
+
+# Notifications (uncomment and update with your actual mobile app service when ready)
+# notify:
+#   - name: mobile_notifications
+#     platform: group
+#     services:
+#       - service: mobile_app_your_phone
+
+# Stream component for camera feeds
+stream:
+
+# Wake on LAN
+wake_on_lan:
+
+# Shopping list
+shopping_list:
+
+# Calendar
+calendar:
+
+# Map
+map:
+
+# Conversation AI
+conversation:
+
+# Timer
+timer:
+
+# Counter
+counter:
+
+# Persistent notification
+persistent_notification:
